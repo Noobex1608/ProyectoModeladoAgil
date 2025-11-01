@@ -11,6 +11,16 @@
       <div class="login-content">
         <h2 class="welcome-title">¡Bienvenido!</h2>
 
+        <!-- Alertas de error -->
+        <div v-if="errorMessage" class="alert alert-error">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/>
+            <line x1="12" y1="8" x2="12" y2="12"/>
+            <line x1="12" y1="16" x2="12.01" y2="16"/>
+          </svg>
+          <span>{{ errorMessage }}</span>
+        </div>
+
         <form @submit.prevent="handleLogin" class="login-form">
           <div class="form-group">
             <label for="email" class="form-label">Correo Electrónico</label>
@@ -18,10 +28,12 @@
               type="email"
               id="email"
               v-model="email"
-              placeholder="tu@email.com"
+              placeholder="tu@live.uleam.edu.ec"
               class="form-input"
+              :class="{ 'input-error': emailError }"
               required
             />
+            <span v-if="emailError" class="field-error">{{ emailError }}</span>
           </div>
 
           <div class="form-group">
@@ -33,6 +45,7 @@
                 v-model="password"
                 placeholder="••••••••"
                 class="form-input"
+                :class="{ 'input-error': passwordError }"
                 required
               />
               <button
@@ -69,6 +82,7 @@
                 </svg>
               </button>
             </div>
+            <span v-if="passwordError" class="field-error">{{ passwordError }}</span>
           </div>
 
           <div class="form-options">
@@ -109,7 +123,7 @@
 
         <div class="signup-prompt">
           <p>
-            ¿No tienes cuenta? <a href="#" class="signup-link">Regístrate</a>
+            ¿No tienes cuenta? <router-link to="/register" class="signup-link">Regístrate</router-link>
           </p>
         </div>
       </div>
@@ -120,6 +134,7 @@
 <script setup lang="ts">
 import { onMounted, ref } from "vue";
 import { useRouter } from "vue-router";
+import { supabase } from "../lib/supabase";
 
 const router = useRouter();
 
@@ -128,6 +143,9 @@ const password = ref("");
 const rememberMe = ref(false);
 const showPassword = ref(false);
 const isLoading = ref(false);
+const errorMessage = ref("");
+const emailError = ref("");
+const passwordError = ref("");
 
 // Al cargar el componente, verificar si hay credenciales guardadas
 onMounted(() => {
@@ -144,15 +162,86 @@ const togglePassword = () => {
   showPassword.value = !showPassword.value;
 };
 
+/**
+ * Validar que el correo sea del dominio institucional
+ */
+const validarDominioCorreo = (correo: string): boolean => {
+  const dominioPermitido = "@live.uleam.edu.ec";
+  return correo.toLowerCase().endsWith(dominioPermitido);
+};
+
+/**
+ * Limpiar mensajes de error
+ */
+const limpiarErrores = () => {
+  errorMessage.value = "";
+  emailError.value = "";
+  passwordError.value = "";
+};
+
 const handleLogin = async () => {
+  // Limpiar errores anteriores
+  limpiarErrores();
+
+  // Validar dominio del correo ANTES de intentar login
+  if (!validarDominioCorreo(email.value)) {
+    errorMessage.value = "Solo se permiten correos con dominio @live.uleam.edu.ec";
+    emailError.value = "Dominio de correo no válido";
+    return;
+  }
+
   isLoading.value = true;
 
-  // Simulación de login - aquí integrarías con Supabase
-  setTimeout(() => {
-    console.log("Login attempt:", {
+  try {
+    // Intentar login con Supabase
+    const { data, error } = await supabase.auth.signInWithPassword({
       email: email.value,
-      rememberMe: rememberMe.value,
+      password: password.value,
     });
+
+    if (error) {
+      console.error("Error en login:", error);
+      isLoading.value = false;
+
+      // Manejar diferentes tipos de errores de Supabase
+      switch (error.message) {
+        case "Invalid login credentials":
+          // Verificar si el email existe en la base de datos
+          const { data: userData } = await supabase
+            .from("profiles")
+            .select("email")
+            .eq("email", email.value)
+            .single();
+
+          if (userData) {
+            // El email existe, entonces la contraseña es incorrecta
+            errorMessage.value = "Contraseña incorrecta. Por favor, verifica tus credenciales.";
+            passwordError.value = "Contraseña incorrecta";
+          } else {
+            // El email no existe
+            errorMessage.value = "El correo electrónico no está registrado.";
+            emailError.value = "Correo no registrado";
+          }
+          break;
+
+        case "Email not confirmed":
+          errorMessage.value = "Por favor, confirma tu correo electrónico antes de iniciar sesión.";
+          emailError.value = "Email no confirmado";
+          break;
+
+        case "Invalid email":
+          errorMessage.value = "El formato del correo electrónico no es válido.";
+          emailError.value = "Formato inválido";
+          break;
+
+        default:
+          errorMessage.value = `Error al iniciar sesión: ${error.message}`;
+      }
+      return;
+    }
+
+    // Login exitoso
+    console.log("Login exitoso:", data);
 
     // Si "Recordarme" está activado, guardar el email en localStorage
     if (rememberMe.value) {
@@ -164,33 +253,38 @@ const handleLogin = async () => {
       localStorage.removeItem("rememberMe");
     }
 
-    // Guardar token de sesión simulado (en producción usarías el token real de Supabase)
-    const fakeToken = btoa(email.value + ":" + Date.now());
+    // Guardar información de sesión
+    const userEmail = data.user?.email || email.value;
+    const accessToken = data.session?.access_token || "";
 
     if (rememberMe.value) {
       // Si "Recordarme" está activado, usar localStorage (persistente)
-      localStorage.setItem("authToken", fakeToken);
-      localStorage.setItem("userEmail", email.value);
+      localStorage.setItem("authToken", accessToken);
+      localStorage.setItem("userEmail", userEmail);
       localStorage.setItem("isAuthenticated", "true");
     } else {
       // Si no, usar sessionStorage (solo dura la sesión del navegador)
-      sessionStorage.setItem("authToken", fakeToken);
-      sessionStorage.setItem("userEmail", email.value);
+      sessionStorage.setItem("authToken", accessToken);
+      sessionStorage.setItem("userEmail", userEmail);
       sessionStorage.setItem("isAuthenticated", "true");
     }
 
     isLoading.value = false;
 
-    // Simular login exitoso y redirigir
+    // Mostrar mensaje de éxito
     alert(
-      `¡Bienvenido ${email.value}! ${
+      `¡Bienvenido ${userEmail}! ${
         rememberMe.value ? "(Sesión guardada)" : "(Sesión temporal)"
       }`
     );
 
     // Redirigir a la página principal o dashboard
     router.push("/");
-  }, 1500);
+  } catch (error: any) {
+    console.error("Error inesperado:", error);
+    isLoading.value = false;
+    errorMessage.value = "Ocurrió un error inesperado. Por favor, intenta de nuevo.";
+  }
 };
 </script>
 
@@ -341,6 +435,42 @@ const handleLogin = async () => {
   color: var(--color-texto-oscuro);
   margin-bottom: 20px;
   text-align: center;
+}
+
+/* Alertas de error */
+.alert {
+  padding: 12px 16px;
+  border-radius: 12px;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 0.9rem;
+  animation: fadeIn 0.3s ease-out;
+}
+
+.alert-error {
+  background-color: #fee;
+  border: 1px solid #fcc;
+  color: #c33;
+}
+
+.alert svg {
+  flex-shrink: 0;
+}
+
+/* Mensajes de error en campos */
+.field-error {
+  display: block;
+  color: #c33;
+  font-size: 0.8rem;
+  margin-top: 6px;
+  font-weight: 500;
+}
+
+.input-error {
+  border-color: #c33 !important;
+  background-color: #fff5f5 !important;
 }
 
 .welcome-subtitle {

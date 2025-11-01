@@ -1,4 +1,5 @@
 import { computed, ref } from "vue";
+import { supabase } from "../lib/supabase";
 
 // Estado global de autenticación
 const isAuthenticated = ref(false);
@@ -6,8 +7,32 @@ const userEmail = ref("");
 
 export function useAuth() {
   // Verificar si el usuario está autenticado
-  const checkAuth = () => {
-    // Primero verificar en localStorage (recordarme activado)
+  const checkAuth = async () => {
+    // Primero verificar sesión de Supabase
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+
+    if (session?.user) {
+      isAuthenticated.value = true;
+      userEmail.value = session.user.email || "";
+
+      // Sincronizar con localStorage/sessionStorage
+      const rememberMe = localStorage.getItem("rememberMe") === "true";
+      if (rememberMe) {
+        localStorage.setItem("isAuthenticated", "true");
+        localStorage.setItem("userEmail", session.user.email || "");
+        localStorage.setItem("authToken", session.access_token);
+      } else {
+        sessionStorage.setItem("isAuthenticated", "true");
+        sessionStorage.setItem("userEmail", session.user.email || "");
+        sessionStorage.setItem("authToken", session.access_token);
+      }
+
+      return true;
+    }
+
+    // Si no hay sesión en Supabase, verificar localStorage/sessionStorage
     const localAuth = localStorage.getItem("isAuthenticated");
     const localEmail = localStorage.getItem("userEmail");
 
@@ -17,7 +42,6 @@ export function useAuth() {
       return true;
     }
 
-    // Si no está en localStorage, verificar en sessionStorage (sesión temporal)
     const sessionAuth = sessionStorage.getItem("isAuthenticated");
     const sessionEmail = sessionStorage.getItem("userEmail");
 
@@ -33,7 +57,10 @@ export function useAuth() {
   };
 
   // Cerrar sesión
-  const logout = () => {
+  const logout = async () => {
+    // Cerrar sesión en Supabase
+    await supabase.auth.signOut();
+
     // Limpiar localStorage
     localStorage.removeItem("authToken");
     localStorage.removeItem("userEmail");
