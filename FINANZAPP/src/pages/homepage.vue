@@ -1,5 +1,4 @@
 <template>
-    <navbar></navbar>
     <section class="hero-section">
       <div class="hero-decoration"></div>
       <div class="container mx-auto px-4 relative z-10">
@@ -81,14 +80,15 @@
         </div>
       </div>
     </section>
-    <Footer />
 </template>
 
 <script setup lang="ts">
-import Navbar from '../components/Navbar.vue';
-import Footer from '../components/Footer.vue';
+import { useRouter } from 'vue-router';
+
+const router = useRouter();
+
 const handleCtaClick = () => {
-    alert('Por implementar');
+    router.push('/login');
 };
 
 </script>

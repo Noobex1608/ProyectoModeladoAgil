@@ -2,7 +2,7 @@
     <header>
   <nav>
     <div class="logo">
-      <a href="/">FINANZAPP</a>
+      <router-link to="/">FINANZAPP</router-link>
     </div>
 
     <ul class="nav-links">
@@ -10,6 +10,13 @@
       <router-link to="#acerca-de">Acerca de</router-link>
       <router-link to="#servicios">Servicios</router-link>
       <router-link to="#contacto">Contacto</router-link>
+      
+      <!-- Mostrar según estado de autenticación -->
+      <template v-if="isAuthenticated">
+        <span class="user-email">{{ userEmail }}</span>
+        <button @click="handleLogout" class="logout-nav-button">Cerrar Sesión</button>
+      </template>
+      <router-link v-else to="/login" class="login-nav-link">Iniciar Sesión</router-link>
     </ul>
 
     <button class="menu-toggle" aria-label="Abrir menú">
@@ -22,8 +29,38 @@
 </template>
 
 <script setup lang="ts">
+import { onMounted, ref } from 'vue';
+import { useRouter } from 'vue-router';
+import { useAuth } from '../composables/useAuth';
 
+const router = useRouter();
+const { checkAuth, logout, getUserEmail } = useAuth();
 
+const isAuthenticated = ref(false);
+const userEmail = ref('');
+
+// Verificar autenticación al montar el componente
+onMounted(() => {
+  isAuthenticated.value = checkAuth();
+  if (isAuthenticated.value) {
+    userEmail.value = getUserEmail.value;
+  }
+});
+
+// Actualizar el estado cuando cambie la ruta
+router.afterEach(() => {
+  isAuthenticated.value = checkAuth();
+  if (isAuthenticated.value) {
+    userEmail.value = getUserEmail.value;
+  }
+});
+
+const handleLogout = () => {
+  logout();
+  isAuthenticated.value = false;
+  userEmail.value = '';
+  router.push('/');
+};
 </script>
 
 <style scoped>
@@ -62,6 +99,44 @@ nav {
 }
 .nav-links a:hover {
   color: #A2D3C7;
+}
+.user-email {
+  color: #A2D3C7;
+  font-weight: 600;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+}
+.login-nav-link {
+  background: linear-gradient(135deg, #A2D3C7, #8BC9BD);
+  padding: 8px 20px !important;
+  border-radius: 20px;
+  color: #35495e !important;
+  font-weight: 700 !important;
+  transition: all 0.3s ease;
+}
+.login-nav-link:hover {
+  background: linear-gradient(135deg, #8BC9BD, #A2D3C7);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(162, 211, 199, 0.4);
+  color: #2c3e50 !important;
+}
+.logout-nav-button {
+  background: linear-gradient(135deg, #EF8E7D, #E2AA87);
+  padding: 8px 20px;
+  border-radius: 20px;
+  color: white;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-family: 'Arial Black', sans-serif;
+  font-size: 1rem;
+}
+.logout-nav-button:hover {
+  background: linear-gradient(135deg, #E2AA87, #EF8E7D);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(239, 142, 125, 0.4);
 }
 .menu-toggle {
   display: none;
