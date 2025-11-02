@@ -10,6 +10,7 @@
     "test": "vitest"
   },
   "dependencies": {
+    "@iconify/vue": "^5.0.0",
     "@supabase/supabase-js": "^2.76.1",
     "@tailwindcss/vite": "^4.1.16",
     "pinia": "^3.0.3",

@@ -83,8 +83,12 @@
 </template>
 
 <script setup lang="ts">
+import { useRouter } from 'vue-router';
+
+const router = useRouter();
+
 const handleCtaClick = () => {
-    alert('Por implementar');
+    router.push('/login');
 };
 
 </script>
