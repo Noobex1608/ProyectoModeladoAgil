@@ -24,6 +24,7 @@ describe("Login.vue", () => {
             routes: [
                 { path: "/", component: { template: "<div>Home</div>" } },
                 { path: "/register", component: Register },
+                { path: "/forgot-password", component: { template: "<div>Forgot Password</div>" } },
             ],
         });
 
