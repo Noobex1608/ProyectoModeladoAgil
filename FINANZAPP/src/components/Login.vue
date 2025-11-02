@@ -27,6 +27,7 @@
             <input
               type="email"
               id="email"
+              data-testid="email"
               v-model="email"
               placeholder="tu@live.uleam.edu.ec"
               class="form-input"
@@ -42,6 +43,7 @@
               <input
                 :type="showPassword ? 'text' : 'password'"
                 id="password"
+                data-testid="password"
                 v-model="password"
                 placeholder="••••••••"
                 class="form-input"
@@ -94,10 +96,10 @@
               />
               <span class="checkbox-label">Recordarme</span>
             </label>
-            <a href="#" class="forgot-password">¿Olvidaste tu contraseña?</a>
+            <p ><router-link to="/forgot-password" class="forgot-password">¿Olvidaste tu contraseña?</router-link></p>
           </div>
 
-          <button type="submit" class="login-button" :disabled="isLoading">
+          <button type="submit" id="btn-login" data-testid="btn-login" class="login-button" :disabled="isLoading">
             <span v-if="!isLoading">Iniciar Sesión</span>
             <span v-else class="loading-spinner">
               <svg
