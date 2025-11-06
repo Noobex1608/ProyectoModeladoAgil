@@ -4,7 +4,7 @@ import type {
   IFormularioCategoria,
   TipoCategoria,
 } from "../interfaces";
-import { supabase } from "../lib/supabase";
+import { supabase } from "../lib/conectionWithSupabase";
 
 export function useCategorias() {
   const categorias = ref<ICategoria[]>([]);

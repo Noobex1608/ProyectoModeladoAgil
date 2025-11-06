@@ -4,7 +4,7 @@ import type {
   IPresupuestoConCategoria,
   IPresupuestoVsReal,
 } from "../interfaces";
-import { supabase } from "../lib/supabase";
+import { supabase } from "../lib/conectionWithSupabase";
 
 export function usePresupuestos() {
   const presupuestos = ref<IPresupuestoConCategoria[]>([]);

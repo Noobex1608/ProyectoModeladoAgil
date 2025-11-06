@@ -5,7 +5,7 @@ import type {
   IGastosMensualesPorCategoria,
   IRespuestaGastosMensuales,
 } from "../interfaces";
-import { supabase } from "../lib/supabase";
+import { supabase } from "../lib/conectionWithSupabase";
 
 export function useEstadisticas() {
   const balance = ref<IBalanceUsuario | null>(null);

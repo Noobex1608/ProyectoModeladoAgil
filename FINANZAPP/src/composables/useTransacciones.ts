@@ -5,7 +5,7 @@ import type {
   ITransaccionConCategoria,
   TipoTransaccion,
 } from "../interfaces";
-import { supabase } from "../lib/supabase";
+import { supabase } from "../lib/conectionWithSupabase";
 
 export function useTransacciones() {
   const transacciones = ref<ITransaccionConCategoria[]>([]);

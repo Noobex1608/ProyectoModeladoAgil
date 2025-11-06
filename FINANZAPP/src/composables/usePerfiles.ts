@@ -1,6 +1,6 @@
 import { computed, ref } from "vue";
 import type { IFormularioActualizacionPerfil, IPerfil } from "../interfaces";
-import { supabase } from "../lib/supabase";
+import { supabase } from "../lib/conectionWithSupabase";
 
 export function usePerfiles() {
   const perfil = ref<IPerfil | null>(null);

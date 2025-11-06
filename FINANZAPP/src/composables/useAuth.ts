@@ -1,5 +1,5 @@
 import { computed, ref } from "vue";
-import { supabase } from "../lib/supabase";
+import { supabase } from "../lib/conectionWithSupabase";
 
 // Estado global de autenticación
 const isAuthenticated = ref(false);
