@@ -1,12 +1,12 @@
 import { mount } from "@vue/test-utils";
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { createRouter, createMemoryHistory } from "vue-router";
-import { supabase } from "../../lib/supabase";
+import { supabase } from "../../lib/conectionWithSupabase";
 import Login from "../../components/Login.vue";
 import Register from "../../components/Register.vue";
 
 // Mock de Supabase
-vi.mock("../../lib/supabase", () => ({
+vi.mock("../../lib/conectionWithSupabase", () => ({
     supabase: {
         auth: {
             signInWithPassword: vi.fn(),
